@@ -8,6 +8,10 @@
 #include <linux/path.h>
 #include <linux/susfs_def.h>
 
+struct kstat;
+struct seq_file;
+struct filename;
+
 #define SUSFS_VERSION "v1.5.5"
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
 #define SUSFS_VARIANT "NON-GKI"
