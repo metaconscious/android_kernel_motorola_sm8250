@@ -916,7 +916,18 @@ static int ovl_dir_open(struct inode *inode, struct file *file)
 	if (!od)
 		return -ENOMEM;
 
+#ifdef CONFIG_KSU_SUSFS_SUS_OVERLAYFS
+	ovl_path_lowerdata(file->f_path.dentry, &realpath);
+	if (likely(realpath.mnt && realpath.dentry)) {
+		/* Keep upper semantics for synthesized overlay view. */
+		type = __OVL_PATH_UPPER;
+		goto bypass_orig_flow;
+	}
+#endif
 	type = ovl_path_real(file->f_path.dentry, &realpath);
+#ifdef CONFIG_KSU_SUSFS_SUS_OVERLAYFS
+bypass_orig_flow:
+#endif
 	realfile = ovl_dir_open_realfile(file, &realpath);
 	if (IS_ERR(realfile)) {
 		kfree(od);
