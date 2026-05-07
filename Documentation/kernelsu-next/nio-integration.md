@@ -3,7 +3,7 @@
 Date: 2026-05-07 (UTC)  
 Kernel tree: `kernel/motorola/sm8250`  
 Device target: Motorola Edge S / SM8250 / `nio` / XT2125-4  
-Status: Integrated (implementation complete, runtime validation pending device test)
+Status: Integrated (post-failure patchset updated, runtime validation pending device test)
 
 ## 1. Objective
 
@@ -111,6 +111,20 @@ Added to `arch/arm64/configs/vendor/ext_config/nio-default.config`:
    - Message: `kernel: add KernelSU-Next manual hooks for nio`
    - Includes: syscall hook integration + `nio-default.config` enablement.
 
+3. Milestone M3 (deterministic backports for KSU build ordering)
+   - Commit: `b2ef284ff83b`
+   - Message: `fs: backport path_umount and seccomp filter_count for KernelSU`
+   - Includes:
+     - `fs/namespace.c`: adds `can_umount()` + `path_umount()`
+     - `fs/internal.h`: adds `extern int path_umount(...)`
+     - `include/linux/seccomp.h`: adds `atomic_t filter_count` support
+   - Reason:
+     - Build failure observed in `out/error.log`:
+       `ld.lld: error: undefined symbol: path_umount`
+     - Root cause was KernelSU `Kbuild` mutating source files during build after
+       compilation order had already produced objects without `path_umount`.
+       This milestone makes those backports permanent and deterministic.
+
 ## 6. Verification Performed Here
 
 Build/flash/runtime testing was intentionally deferred to device-side validation.
@@ -125,6 +139,7 @@ Local static checks completed:
   - `CONFIG_KSU_KPROBES_HOOK` unset
 
 No full kernel build or boot test was executed in this operation.
+One user-provided build failure log was analyzed and fixed in-source (M3).
 
 ## 7. Operational Notes for Future Sync
 
@@ -141,6 +156,7 @@ To roll back integration cleanly:
 
 1. `git revert 3f615115c961`
 2. `git revert 764a962f1c2d`
+3. `git revert b2ef284ff83b`
 
 Or reset branch to pre-integration commit if appropriate for your workflow.
 
